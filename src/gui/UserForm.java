@@ -8,7 +8,11 @@ package gui;
 import dal.ActionDAO;
 import dal.ObjectDAO;
 import dal.PermissionDAO;
+import dal.PermissionRoleDAO;
 import dal.RoleDAO;
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -18,11 +22,15 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import model.Action;
 import model.ObjectModel;
+import model.PermRoleDetail;
 import model.Permission;
+import model.PermissionRole;
 import model.RoleModel;
 import model.User;
 
@@ -59,28 +67,48 @@ public class UserForm extends javax.swing.JFrame {
     private void loadDataToComboboxes() {
         // load privilege role
         RoleDAO roleDAO = new RoleDAO();
-        ArrayList<RoleModel> roles = roleDAO.all();
-        for (RoleModel role : roles) {
-            System.out.println("1");
+        ObjectDAO objectDAO = new ObjectDAO();
+        ActionDAO actionDAO = new ActionDAO();
+        PermissionRoleDAO permissionRoleDAO = new PermissionRoleDAO();
+        PermissionDAO permissionDAO = new PermissionDAO();
+        ArrayList<PermRoleDetail> validPermRoles = new ArrayList<>();
+        for (RoleModel role : roleDAO.all()) {
+//            System.out.println("1");
             if (isRightTime(role.getFromDay(), role.getToDay(), role.getFromTime(), role.getToTime())
-                    && role.getIpAddress().equals(userInfo.getIpAddress())) {
-                cbRoleName.addItem(role.getRoleName());
+                    && role.getIpAddress().equals(userInfo.getIpAddress())
+                    && role.getFromDay().equals(userInfo.getFromDay())
+                    && role.getToDay().equals(userInfo.getToDay())
+                    && role.getFromTime().equals(userInfo.getFromTime())
+                    && role.getToTime().equals(userInfo.getToTime())) {
+//                cbRoleName.addItem(role.getRoleName());
+                System.out.println("hi find one role");
+                for (PermissionRole permissionRole: permissionRoleDAO.getByRoleID(role.getRoleID())) {
+                    PermRoleDetail permRoleDetail = new PermRoleDetail();
+                    Permission permission = permissionDAO.getByID(permissionRole.getPermissionID());
+                    
+                    if (permission == null) continue;
+                    permRoleDetail.setRole(role);
+                    permRoleDetail.setObj(objectDAO.getByID(permission.getObjectID()));
+                    permRoleDetail.setAct(actionDAO.getByID(permission.getActionID()));
+                    
+                    validPermRoles.add(permRoleDetail);
+                    cbPermission.addItem(permRoleDetail.toString());
+                }
             }
         }
         // load permissions
-        PermissionDAO permissionDAO = new PermissionDAO();
-        ObjectDAO objectDAO = new ObjectDAO();
-        ActionDAO actionDAO = new ActionDAO();
-        ArrayList<Permission> permissions = permissionDAO.all();
-
-        for (Permission permission : permissions) {
-            ObjectModel obj = objectDAO.getByID(permission.getObjectID());
-            Action action = actionDAO.getByID(permission.getActionID());
-            if (isRightTime(obj.getFromDay(), obj.getToDay(), obj.getFromTime(), obj.getToTime())
-                    && obj.getIpAddress().equals(userInfo.getIpAddress())) {
-                cbPermission.addItem(obj.getObjectName() + " -- " + action.getActionName());
-            }
-        }
+        
+        
+//        ArrayList<Permission> permissions = permissionDAO.all();
+//
+//        for (Role permission : permissions) {
+//            ObjectModel obj = objectDAO.getByID(permission.getObjectID());
+//            Action action = actionDAO.getByID(permission.getActionID());
+//            if (isRightTime(obj.getFromDay(), obj.getToDay(), obj.getFromTime(), obj.getToTime())
+//                    && obj.getIpAddress().equals(userInfo.getIpAddress())) {
+//                cbPermission.addItem(obj.getObjectName() + " -- " + action.getActionName());
+//            }
+//        }
     }
 
     /**
@@ -97,33 +125,32 @@ public class UserForm extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         jButton2 = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
-        cbRoleName = new javax.swing.JComboBox<>();
-        cbPermission = new javax.swing.JComboBox<>();
-        jLabel4 = new javax.swing.JLabel();
-        btnExecute = new javax.swing.JButton();
-        btnCancel = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableHistory = new javax.swing.JTable();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        btnExecute = new javax.swing.JButton();
+        btnCancel = new javax.swing.JButton();
+        cbPermission = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jPanel14.setBackground(new java.awt.Color(76, 41, 211));
+        jPanel14.setBackground(new java.awt.Color(71, 120, 197));
         jPanel14.setPreferredSize(new java.awt.Dimension(966, 50));
 
-        jLabel6.setFont(new java.awt.Font("Century Gothic", 0, 24)); // NOI18N
-        jLabel6.setForeground(new java.awt.Color(204, 204, 204));
-        jLabel6.setText("<html> Permission Based SOD <br/> in Dynamic RBAC </html>");
+        jLabel6.setFont(new java.awt.Font("Century Gothic", 0, 21)); // NOI18N
+        jLabel6.setForeground(new java.awt.Color(204, 255, 255));
+        jLabel6.setText("<html> COI In hybrid <br>Access Control Model </html>");
 
         jLabel11.setBackground(new java.awt.Color(255, 255, 255));
-        jLabel11.setFont(new java.awt.Font("Segoe UI Historic", 1, 18)); // NOI18N
-        jLabel11.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel11.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
+        jLabel11.setForeground(new java.awt.Color(204, 255, 255));
         jLabel11.setText("User Page");
 
-        jButton2.setBackground(new java.awt.Color(76, 41, 211));
-        jButton2.setFont(new java.awt.Font("Century Gothic", 1, 14)); // NOI18N
-        jButton2.setForeground(new java.awt.Color(204, 204, 204));
+        jButton2.setBackground(new java.awt.Color(255, 255, 255));
+        jButton2.setFont(new java.awt.Font("Century Gothic", 1, 16)); // NOI18N
+        jButton2.setForeground(new java.awt.Color(51, 51, 51));
         jButton2.setText("Logout");
         jButton2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -136,42 +163,61 @@ public class UserForm extends javax.swing.JFrame {
         jPanel14.setLayout(jPanel14Layout);
         jPanel14Layout.setHorizontalGroup(
             jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel14Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel14Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(jLabel11)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButton2))
-                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(695, 695, 695))
+            .addGroup(jPanel14Layout.createSequentialGroup()
+                .addGap(29, 29, 29)
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(189, 189, 189)
+                .addComponent(jLabel11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel14Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel11)
-                    .addComponent(jButton2))
-                .addGap(415, 415, 415))
+                .addContainerGap()
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel11))
+                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
-        jPanel1.setBackground(new java.awt.Color(204, 204, 204));
+        jPanel1.setBackground(new java.awt.Color(120, 168, 252));
 
-        jLabel3.setFont(new java.awt.Font("Century Gothic", 1, 13)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel3.setText("Role Name");
+        jLabel5.setFont(new java.awt.Font("Century Gothic", 1, 18)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(102, 102, 102));
+        jLabel5.setText("Execution History");
 
-        cbRoleName.setFont(new java.awt.Font("Segoe UI Historic", 0, 13)); // NOI18N
+        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        cbPermission.setFont(new java.awt.Font("Segoe UI Historic", 0, 13)); // NOI18N
+        tableHistory.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED, null, new java.awt.Color(204, 0, 102), null, null));
+        tableHistory.setFont(new java.awt.Font("Segoe UI Historic", 0, 13)); // NOI18N
+        tableHistory.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        jLabel4.setFont(new java.awt.Font("Century Gothic", 1, 13)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel4.setText("Permission");
+            },
+            new String [] {
+                "Role", "Action", "Object"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.Object.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(tableHistory);
+
+        jPanel2.setBackground(new java.awt.Color(242, 247, 247));
+
+        jLabel4.setFont(new java.awt.Font("Century Gothic", 1, 18)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel4.setText("Role-Permission Entry");
 
         btnExecute.setFont(new java.awt.Font("Microsoft YaHei UI", 1, 14)); // NOI18N
         btnExecute.setForeground(new java.awt.Color(102, 102, 102));
@@ -191,87 +237,76 @@ public class UserForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel5.setFont(new java.awt.Font("Century Gothic", 1, 13)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel5.setText("Permission History");
+        cbPermission.setFont(new java.awt.Font("Segoe UI Historic", 0, 13)); // NOI18N
 
-        tableHistory.setFont(new java.awt.Font("Segoe UI Historic", 0, 13)); // NOI18N
-        tableHistory.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Action", "Object"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Object.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
-        jScrollPane1.setViewportView(tableHistory);
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(32, 32, 32)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(btnExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(41, 41, 41)
+                        .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel4)
+                    .addComponent(cbPermission, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(73, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(49, 49, 49)
+                .addComponent(jLabel4)
+                .addGap(18, 18, 18)
+                .addComponent(cbPermission, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(49, 49, 49)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnExecute)
+                    .addComponent(btnCancel))
+                .addContainerGap(135, Short.MAX_VALUE))
+        );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(36, 36, 36)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btnExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnCancel, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE))
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel4)
-                    .addComponent(cbPermission, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cbRoleName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 652, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addGap(260, 260, 260))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(21, 21, 21)
+                .addContainerGap()
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(29, 29, 29)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cbRoleName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(28, 28, 28)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(cbPermission, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(33, 33, 33)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnExecute)
-                    .addComponent(btnCancel))
-                .addGap(122, 122, 122))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addContainerGap())
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(jPanel14, javax.swing.GroupLayout.DEFAULT_SIZE, 1013, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -284,6 +319,41 @@ public class UserForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCancelActionPerformed
 
 
+    public void readOnlyFile(String path) {
+        Desktop desktop = Desktop.getDesktop();
+        
+        File file = new File(path);
+        file.setWritable(false);
+        if (file.exists())
+            try {
+                desktop.open(file);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "There's error when operating on file>Try later",
+                    "Can't Execute", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    public void editFile(String path) {
+        Desktop desktop = Desktop.getDesktop();
+        
+        File file = new File(path);
+        file.setWritable(true);
+        if (file.exists())
+            try {
+                desktop.open(file);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "There's error when operating on file>Try later",
+                    "Can't Execute", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    public void deleteFile(String path) {
+        File file = new File(path);
+        if (file.exists()) {
+            file.delete();
+        } 
+    }
+    
     private void btnExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExecuteActionPerformed
         String permission = (String) cbPermission.getSelectedItem();
         if (permission == null || permission.equals("")) {
@@ -291,36 +361,56 @@ public class UserForm extends javax.swing.JFrame {
                     "Can't Execute", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        String action = permission.split("--")[1].trim();
-        String obj = permission.split("--")[0].trim();
+        String role = permission.split(" ")[0].trim();
+        String action = permission.split(" ")[1].trim();
+        String object = permission.split(" ")[2].trim();
 
         ObjectDAO objectDAO = new ObjectDAO();
         ActionDAO actionDAO = new ActionDAO();
 
         Action act = actionDAO.getByName(action);
-        
+        ObjectModel obj = objectDAO.getByName(object);
         int getStuck = -1;
         
         for (int i = 0; i < dtm.getRowCount(); i++) {
-            Action act2 = actionDAO.getByName((String) dtm.getValueAt(i, 0));
-            if (obj.equals((String) dtm.getValueAt(i, 1))) {
+            Action act2 = actionDAO.getByName((String) dtm.getValueAt(i, 1));
+            if (object.equals((String) dtm.getValueAt(i, 2))) {
                 if (actionDAO.isConflicted(act, act2)) {
                     getStuck = i;
                     
                 } 
             } 
         }
+        
+        
+        RoleDAO roleDAO = new RoleDAO();
+        
         if (getStuck == -1) {
-            dtm.addRow(new String[]{action, obj});
+            
+            if (action.equals("Delete")) {
+                deleteFile(obj.getPath());
+            } else if (action.equals("ReadOnly"))
+            {
+                readOnlyFile(obj.getPath());
+            } else if (action.equals("Edit")) {
+                editFile(obj.getPath());
+            }
+            
+            dtm.addRow(new String[]{role, action, object});
                 JOptionPane.showMessageDialog(this,
-                            "You executed '" + action + "' on " + obj + " successfully",
+                            "You executed '" + action + "' on " + object + " successfully",
                             "Execute successfully",
                             JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this,
-                            "You can't execute '" + action + "' on " + obj + " because"
-                            + " being conflicted with '" 
-                            + actionDAO.getByName((String) dtm.getValueAt(getStuck, 0)).getActionName() + "'",
+                            "You can’t access the role '" + 
+                                       role + "' due to conflict of interest with '" + dtm.getValueAt(getStuck, 0) + "' that you already activated",
+//                               "You can’t access the role '" + 
+//                                       role + "' with the action '" + action 
+//                                       +"' on the object '" +object+ "' that you already activated",
+//                            "You can't execute '" + action + "' on " + object + " because"
+//                            + " being conflicted with '" 
+//                            + actionDAO.getByName((String) dtm.getValueAt(getStuck, 1)).getActionName() + "'",
                             "Access Denied",
                             JOptionPane.INFORMATION_MESSAGE);
         }
@@ -461,15 +551,14 @@ public class UserForm extends javax.swing.JFrame {
     private javax.swing.JButton btnCancel;
     private javax.swing.JButton btnExecute;
     private javax.swing.JComboBox<String> cbPermission;
-    private javax.swing.JComboBox<String> cbRoleName;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel14;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tableHistory;
     // End of variables declaration//GEN-END:variables

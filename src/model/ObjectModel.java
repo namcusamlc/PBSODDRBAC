@@ -17,7 +17,8 @@ public class ObjectModel {
     private String fromTime;
     private String toTime;
     private String ipAddress;
-
+    private String path;
+    
     public int getObjectID() {
         return objectID;
     }
@@ -73,6 +74,13 @@ public class ObjectModel {
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
-    
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
     
 }

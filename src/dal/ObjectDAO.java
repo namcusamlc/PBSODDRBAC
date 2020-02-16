@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import model.ObjectModel;
+import model.RoleModel;
 
 /**
  *
@@ -20,8 +21,8 @@ public class ObjectDAO extends BaseDAO<ObjectModel>{
     @Override
     public int insert(ObjectModel model) {
         try{
-            String sql = "INSERT INTO Objects (ObjectName, FromDay, ToDay, FromTime, ToTime, IpAddress)\n"
-                    + " VALUES (?, ?, ?, ?, ?, ?);";
+            String sql = "INSERT INTO Objects (ObjectName, FromDay, ToDay, FromTime, ToTime, IpAddress, Path)\n"
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?);";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, model.getObjectName());
             statement.setString(2, model.getFromDay());
@@ -29,13 +30,48 @@ public class ObjectDAO extends BaseDAO<ObjectModel>{
             statement.setString(4, model.getFromTime());
             statement.setString(5, model.getToTime());
             statement.setString(6, model.getIpAddress());
+            statement.setString(7, model.getPath());
             statement.execute();
+            
         }
         catch(SQLException err){
             System.out.println("Ops! " + err);
             return 0;
         }
         return 1;
+    }
+    
+    //Get Object having criterias matches the role's criterias
+    public ArrayList<ObjectModel> getByRole(RoleModel role) {
+        ArrayList<ObjectModel> objects = new ArrayList<>();
+        
+        try{
+            String sql = "SELECT * FROM Objects WHERE IpAddress=? AND FromDay=? "
+                    + "AND ToDay=? AND FromTime=? AND ToTime=?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, role.getIpAddress());
+            statement.setString(2, role.getFromDay());
+            statement.setString(3, role.getToDay());
+            statement.setString(4, role.getFromTime());
+            statement.setString(5, role.getToTime());
+            ResultSet rs = statement.executeQuery();
+            while(rs.next()) {
+                ObjectModel obj = new ObjectModel();
+                obj.setObjectID(rs.getInt("ObjectID"));
+                obj.setObjectName(rs.getString("ObjectName"));
+                obj.setFromDay(rs.getString("FromDay"));
+                obj.setToDay(rs.getString("ToDay"));
+                obj.setFromTime(rs.getString("FromTime"));
+                obj.setToTime(rs.getString("ToTime"));
+                obj.setIpAddress(rs.getString("IpAddress"));
+                objects.add(obj);
+            }
+        }
+        catch(SQLException err){
+            System.out.println("Ops! Error get all of Object" + err);
+        }
+        
+        return objects;
     }
     
     public int getCurrentID() {
@@ -70,6 +106,7 @@ public class ObjectDAO extends BaseDAO<ObjectModel>{
                 obj.setFromTime(rs.getString("FromTime"));
                 obj.setToTime(rs.getString("ToTime"));
                 obj.setIpAddress(rs.getString("IpAddress"));
+                obj.setPath(rs.getString("Path"));
                 return obj;
             }
         }
@@ -95,6 +132,7 @@ public class ObjectDAO extends BaseDAO<ObjectModel>{
                 obj.setFromTime(rs.getString("FromTime"));
                 obj.setToTime(rs.getString("ToTime"));
                 obj.setIpAddress(rs.getString("IpAddress"));
+                obj.setPath(rs.getString("Path"));
                 return obj;
             }
         }
@@ -119,6 +157,7 @@ public class ObjectDAO extends BaseDAO<ObjectModel>{
                 obj.setFromTime(rs.getString("FromTime"));
                 obj.setToTime(rs.getString("ToTime"));
                 obj.setIpAddress(rs.getString("IpAddress"));
+                obj.setPath(rs.getString("Path"));
                 objects.add(obj);
             }
         }

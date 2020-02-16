@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import model.Permission;
 import model.RoleModel;
 
 /**
@@ -36,6 +37,34 @@ public class RoleDAO extends BaseDAO<RoleModel>{
             return 0;
         }
         return 1;
+    }
+    
+    public ArrayList<Integer> getByCondtion(Permission permissionModel) {
+        ArrayList<Integer> roleIds = new ArrayList<>();
+        try{
+            String sql = "WITH H AS (\n" +
+                            "	SELECT * \n" +
+                            "	FROM Objects as o \n" +
+                            "	WHERE o.ObjectID=?\n" +
+                            ")\n" +
+                            "SELECT rTable.RoleID \n" +
+                            "FROM Roles as rTable, H\n" +
+                            "WHERE rTable.IpAddress = H.IpAddress "
+                    + "AND rTable.FromDay=H.FromDay "
+                    + "AND rTable.FromTime=H.FromTime "
+                    + "AND rTable.ToDay=H.ToDay "
+                    + "AND rTable.ToTime=H.ToTime";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, permissionModel.getObjectID());
+            ResultSet rs = statement.executeQuery();
+            while(rs.next()) {
+                roleIds.add(rs.getInt("RoleID"));
+            }
+        }
+        catch(SQLException err){
+            System.out.println("Ops! Error get by condtion  in RoleDAO" + err);
+        }
+        return roleIds;
     }
     
     public int getCurrentID() {

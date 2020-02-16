@@ -19,7 +19,8 @@ public class User {
     private String fromTime;
     private String toTime;
     private String IpAddress;
-
+    private String category;
+    
     public String getUsername() {
         return username;
     }
@@ -75,6 +76,12 @@ public class User {
     public void setIpAddress(String IpAddress) {
         this.IpAddress = IpAddress;
     }
-    
-    
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
 }
